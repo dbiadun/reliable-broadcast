@@ -1,4 +1,5 @@
 mod domain;
+mod broadcast;
 
 pub use crate::broadcast_public::*;
 pub use crate::executors_public::*;
@@ -9,6 +10,7 @@ pub use domain::*;
 pub mod broadcast_public {
     use crate::executors_public::ModuleRef;
     use crate::{PlainSenderMessage, StableStorage, StubbornBroadcastModule, SystemAcknowledgmentMessage, SystemBroadcastMessage, SystemMessageContent, SystemMessageHeader, SystemMessage};
+    use crate::broadcast;
     use std::collections::HashSet;
     use uuid::Uuid;
 
@@ -31,7 +33,7 @@ pub mod broadcast_public {
         _processes_number: usize,
         _delivered_callback: Box<dyn Fn(SystemMessage) + Send>,
     ) -> Box<dyn ReliableBroadcast> {
-        unimplemented!()
+        broadcast::build_logged_uniform_reliable_broadcast(_sbeb, _storage, _id, _processes_number, _delivered_callback)
     }
 
     pub trait StubbornBroadcast: Send {
@@ -48,7 +50,7 @@ pub mod broadcast_public {
         _link: Box<dyn PlainSender>,
         _processes: HashSet<Uuid>,
     ) -> Box<dyn StubbornBroadcast> {
-        unimplemented!()
+        broadcast::build_stubborn_best_effort_broadcast(_link, _processes)
     }
 }
 
