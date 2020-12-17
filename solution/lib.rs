@@ -1,6 +1,7 @@
 mod domain;
 mod broadcast;
 mod executors;
+mod system_setup;
 
 pub use crate::broadcast_public::*;
 pub use crate::executors_public::*;
@@ -143,12 +144,13 @@ pub mod executors_public {
 
 pub mod system_setup_public {
     use crate::{Configuration, ModuleRef, ReliableBroadcast, StubbornBroadcast, System};
+    use crate::system_setup::_setup_system;
 
     pub fn setup_system(
         _system: &mut System,
         _config: Configuration,
     ) -> ModuleRef<ReliableBroadcastModule> {
-        unimplemented!()
+        _setup_system(_system, _config)
     }
 
     pub struct ReliableBroadcastModule {
