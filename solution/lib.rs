@@ -1,5 +1,6 @@
 mod domain;
 mod broadcast;
+mod executors;
 
 pub use crate::broadcast_public::*;
 pub use crate::executors_public::*;
@@ -71,13 +72,18 @@ pub mod stable_storage_public {
 pub mod executors_public {
     use std::fmt;
     use std::time::Duration;
+    use crate::executors::*;
+    use crossbeam_channel::Sender;
+    use std::thread::JoinHandle;
+    use std::sync::{Arc, Mutex};
 
     pub trait Message: fmt::Debug + Clone + Send + 'static {}
+
     impl<T: fmt::Debug + Clone + Send + 'static> Message for T {}
 
     pub trait Handler<M: Message>
-    where
-        M: Message,
+        where
+            M: Message,
     {
         fn handle(&mut self, msg: M);
     }
@@ -85,45 +91,52 @@ pub mod executors_public {
     #[derive(Debug, Clone)]
     pub struct Tick {}
 
-    pub struct System {}
+    pub struct System {
+        pub(crate) ex_tx: Sender<WorkerMsg>,
+        pub(crate) timer_tx: Sender<TimerMsg>,
+        pub(crate) executor_thread: Option<JoinHandle<()>>,
+        pub(crate) timer_thread: Option<JoinHandle<()>>,
+    }
 
     impl System {
-        pub fn request_tick<T: Handler<Tick>>(&mut self, _requester: &ModuleRef<T>, _delay: Duration) {
-            unimplemented!()
+        pub fn request_tick<T: Send + Handler<Tick>>(&mut self, _requester: &ModuleRef<T>, _delay: Duration) {
+            self._request_tick(_requester, _delay)
         }
 
         pub fn register_module<T: Send + 'static>(&mut self, _module: T) -> ModuleRef<T> {
-            unimplemented!()
+            self._register_module(_module)
         }
 
         pub fn new() -> Self {
-            unimplemented!()
+            Self::_new()
         }
     }
 
-    pub struct ModuleRef<T: 'static> {
-        // dummy marker to satisfy compiler
-        pub(crate) mod_internal: std::marker::PhantomData<T>,
+    pub struct ModuleRef<T: Send + 'static> {
+        pub(crate) id: u128,
+        pub(crate) mod_tx: Sender<Box<dyn Fn(&mut T) + Send>>,
+        pub(crate) ex_tx: Sender<WorkerMsg>,
+        pub(crate) ref_count: Arc<Mutex<u128>>,
     }
 
-    impl<T> ModuleRef<T> {
+    impl<T: Send> ModuleRef<T> {
         pub fn send<M: Message>(&self, _msg: M)
-        where
-            T: Handler<M>,
+            where
+                T: Handler<M>,
         {
-            unimplemented!()
+            self._send(_msg)
         }
     }
 
-    impl<T> fmt::Debug for ModuleRef<T> {
+    impl<T: Send> fmt::Debug for ModuleRef<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
             f.write_str("<ModuleRef>")
         }
     }
 
-    impl<T> Clone for ModuleRef<T> {
+    impl<T: Send> Clone for ModuleRef<T> {
         fn clone(&self) -> Self {
-            unimplemented!()
+            self._clone()
         }
     }
 }

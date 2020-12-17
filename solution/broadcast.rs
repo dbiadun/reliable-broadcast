@@ -47,8 +47,8 @@ impl StubbornBroadcast for StubbornBestEffortBroadcast {
             let count = self.message_counts.entry(msg.message.header.clone()).or_insert(0);
             *count += 1;
             self.pending.insert((*p, msg.message.header.clone()));
+            self.link.send_to(p, Broadcast(msg.clone()));
         }
-        self.tick();
     }
 
     fn receive_acknowledgment(&mut self, proc: Uuid, msg: SystemMessageHeader) {
@@ -102,10 +102,6 @@ impl LoggedUniformReliableBroadcast {
         processes_number: usize,
         delivered_callback: Box<dyn Fn(SystemMessage) + Send>,
     ) -> Self {
-        // let delivered = Self::deserialize_set(&storage.get(DELIVERED).unwrap_or(Vec::new()));
-        // if delivered.is_empty() {
-        //     storage.put(DELIVERED, &Self::serialize_set(&delivered));
-        // }
         let pending = Self::deserialize_set(&storage.get(PENDING).unwrap_or(Vec::new()));
         if pending.is_empty() {
             storage.put(PENDING, &Self::serialize_set(&pending)).ok();
@@ -144,13 +140,6 @@ impl LoggedUniformReliableBroadcast {
             next_id,
         }
     }
-
-    // fn calculate_key<T: Hash>(t: T) -> String {
-    //     let mut hasher = DefaultHasher::new();
-    //     t.hash(&mut hasher);
-    //     let hash = hasher.finish();
-    //     hash.to_string()
-    // }
 
     fn add_to_pending(&mut self, hdr: &SystemMessageHeader, msg: &SystemMessageContent) {
         self.pending.insert(hdr.clone());
