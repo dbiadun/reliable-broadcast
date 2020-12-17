@@ -248,22 +248,28 @@ mod timer {
         }
 
         pub fn timer_thread_function(&mut self, rx: Receiver<TimerMsg>) {
-            while let Ok(msg) = rx.recv() {
-                match msg {
-                    TimerMsg::RequestTick(req) => self.add_request(req),
-                    TimerMsg::Done => break
+            'outer: loop {
+                while let Ok(msg) = rx.try_recv() {
+                    match msg {
+                        TimerMsg::RequestTick(req) => self.add_request(req),
+                        TimerMsg::Done => break 'outer
+                    }
+                }
+
+                for req in self.requests.iter_mut() {
+                    req.tick(Self::current_time(self.start_time));
                 }
             }
         }
 
         fn add_request(&mut self, mut req: Box<dyn TickTrait>) {
-            req.start_timer(self.current_time());
-            req.tick(self.current_time());
+            req.start_timer(Self::current_time(self.start_time));
+            req.tick(Self::current_time(self.start_time));
             self.requests.push(req);
         }
 
-        fn current_time(&self) -> Duration {
-            Instant::now().duration_since(self.start_time)
+        fn current_time(start_time: Instant) -> Duration {
+            Instant::now().duration_since(start_time)
         }
     }
 }
