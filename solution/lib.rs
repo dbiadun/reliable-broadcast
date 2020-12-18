@@ -2,6 +2,7 @@ mod domain;
 mod broadcast;
 mod executors;
 mod system_setup;
+mod stable_storage;
 
 pub use crate::broadcast_public::*;
 pub use crate::executors_public::*;
@@ -58,6 +59,7 @@ pub mod broadcast_public {
 
 pub mod stable_storage_public {
     use std::path::PathBuf;
+    use crate::stable_storage::build_file_stable_storage;
 
     pub trait StableStorage: Send {
         fn put(&mut self, key: &str, value: &[u8]) -> Result<(), String>;
@@ -66,7 +68,7 @@ pub mod stable_storage_public {
     }
 
     pub fn build_stable_storage(_root_storage_dir: PathBuf) -> Box<dyn StableStorage> {
-        unimplemented!()
+        build_file_stable_storage(_root_storage_dir)
     }
 }
 
