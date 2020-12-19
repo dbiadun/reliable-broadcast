@@ -247,6 +247,7 @@ impl ReliableBroadcast for LoggedUniformReliableBroadcast {
                 self.storage.put(&*Self::header_key(DELIVERED, &hdr), &[]).ok();
                 self.pending.remove(&hdr);
                 self.storage.put(PENDING, &Self::serialize_set(&self.pending)).ok();
+                self.storage.put(&*Self::header_key(PENDING, &hdr), &[]).ok();
                 self.ack.remove(&hdr);
             }
         }
