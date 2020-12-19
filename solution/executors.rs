@@ -218,7 +218,7 @@ mod timer {
 
     impl<T: Send + Handler<Tick>> TickTrait for TickRequest<T> {
         fn start_timer(&mut self, time: Duration) {
-            self.next_tick = time;
+            self.next_tick = time + self.interval;
         }
 
         fn tick(&mut self, time: Duration) {
@@ -264,7 +264,6 @@ mod timer {
 
         fn add_request(&mut self, mut req: Box<dyn TickTrait>) {
             req.start_timer(Self::current_time(self.start_time));
-            req.tick(Self::current_time(self.start_time));
             self.requests.push(req);
         }
 
